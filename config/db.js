@@ -1,29 +1,28 @@
 const sql = require('mssql');
 require('dotenv').config();
 
-const config = {
+const dbConfig = {
+  server: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER,
-  database: process.env.DB_DATABASE,
-  port: parseInt(process.env.DB_PORT, 10),
+  database: process.env.DB_NAME,
   options: {
-    encrypt: true, // Si usas una conexión local, debe ser false
-    enableArithAbort: true,
-    trustServerCertificate: true
-  }
+    encrypt: true, // Asegúrate de que esté habilitado para RDS.
+    trustServerCertificate: false,
+  },
 };
 
-const connectDB = async () => {
-    try {
-      const pool = await sql.connect(config);
-      console.log('Conexión a la base de datos exitosa');
-      return pool;
-    } catch (err) {
-      console.error('Error al conectar a la base de datos:', err);
-      throw err;
-    }
-  };
-  
-  module.exports = connectDB;
+
+const poolPromise = new sql.ConnectionPool(dbConfig)
+  .connect()
+  .then((pool) => {
+    console.log('Conexión a la base de datos RDS exitosa');
+    return pool;
+  })
+  .catch((err) => {
+    console.error('Error al conectar a la base de datos RDS:', err);
+    throw err;
+  });
+
+module.exports = { sql, poolPromise };
 
